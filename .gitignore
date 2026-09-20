@@ -1,0 +1,43 @@
+# Rust / Cargo
+target/
+**/*.rs.bk
+
+# Tauri
+src-tauri/gen/schemas/
+src-tauri/*.log
+*.AppImage
+*.dmg
+*.msi
+*.exe
+*.deb
+*.rpm
+
+# Runtime data (created at startup: data/automation.db)
+data/*.db
+data/*.db-journal
+data/*.db-wal
+data/*.db-shm
+data/*.sqlite*
+**/*.db-journal
+**/*.db-wal
+**/*.db-shm
+
+# Node (JS tests run with `node --test`)
+node_modules/
+coverage/
+
+# IDE / editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+docs/
+
+# Env
+.env
+.env*.local

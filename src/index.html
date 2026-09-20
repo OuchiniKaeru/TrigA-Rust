@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en" data-theme="light-blue">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TrigA</title>
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/execution.css">
+</head>
+<body>
+  <aside>
+    <div class="brand">
+      <div class="brand-row">
+        <img class="brand-icon" src="assets/icon.png" alt="TrigA icon">
+        <span class="brand-name">TrigA</span>
+      </div>
+      <span class="brand-sub" data-i18n="brand.subtitle">Automation Manager</span>
+    </div>
+    <nav>
+      <button class="nav active" data-view="dashboard" data-i18n="nav.dashboard">Dashboard</button>
+      <button class="nav" data-view="automations" data-i18n="nav.automations">Automations</button>
+      <button class="nav" data-view="history" data-i18n="nav.history">History</button>
+      <button class="nav" data-view="settings" data-i18n="nav.settings">Settings</button>
+    </nav>
+    <div class="engine"><span></span><em data-i18n="engine.online">Engine online</em></div>
+  </aside>
+  <main>
+    <header>
+      <div>
+        <p class="eyebrow" data-i18n="header.eyebrow">LOCAL AUTOMATION CONTROL</p>
+        <h1 id="page-title">Dashboard</h1>
+      </div>
+      <button id="new-automation" class="primary" data-i18n="action.new">＋ New automation</button>
+    </header>
+
+    <section id="dashboard" class="view active">
+      <div class="stats">
+        <article class="stat-total"><span><i class="stat-dot"></i><em data-i18n="stats.automations">Automations</em></span><b id="stat-total">0</b></article>
+        <article class="stat-enabled"><span><i class="stat-dot"></i><em data-i18n="stats.enabled">Enabled</em></span><b id="stat-enabled">0</b></article>
+        <article class="stat-success"><span><i class="stat-dot"></i><em data-i18n="stats.success">Success runs</em></span><b id="stat-success">0</b></article>
+        <article class="stat-failed"><span><i class="stat-dot"></i><em data-i18n="stats.failed">Failed runs</em></span><b id="stat-failed">0</b></article>
+      </div>
+      <div class="panel">
+        <div class="panel-head">
+          <h2 data-i18n="panel.recent">Recent executions</h2>
+          <button class="text-button" data-view="history" data-i18n="panel.viewAll">View all</button>
+        </div>
+        <div id="recent-history" class="table-wrap"></div>
+      </div>
+    </section>
+
+    <section id="automations" class="view">
+      <div class="panel">
+        <div class="panel-head">
+          <h2 data-i18n="panel.automations">Automations</h2>
+          <span id="automation-count" class="muted">0 total</span>
+        </div>
+        <div id="automation-list" class="automation-list"></div>
+      </div>
+    </section>
+
+    <section id="history" class="view">
+      <div class="panel">
+        <div class="panel-head">
+          <h2 data-i18n="panel.history">Execution history</h2>
+          <span class="muted" data-i18n="history.latest">Latest 20</span>
+        </div>
+        <div id="history-list" class="table-wrap"></div>
+      </div>
+    </section>
+
+    <section id="settings" class="view">
+      <div class="settings-grid">
+        <div class="settings-card">
+          <h3 data-i18n="settings.appearance">Appearance</h3>
+          <p data-i18n="settings.appearanceBody">Choose a color theme and display language. Preferences are saved in this app.</p>
+          <div class="settings-row">
+            <label for="theme-select" data-i18n="settings.theme">Theme</label>
+            <select id="theme-select"></select>
+          </div>
+          <div class="settings-row">
+            <label for="lang-select" data-i18n="settings.language">Language</label>
+            <select id="lang-select"></select>
+          </div>
+        </div>
+        <div class="settings-card">
+          <h3 data-i18n="settings.api">Local API</h3>
+          <p data-i18n="settings.apiBody">External AI agents and CLI tools can manage TrigA through the loopback REST API.</p>
+          <div class="settings-row">
+            <label data-i18n="settings.endpoint">Endpoint</label>
+            <span class="api-endpoint">http://127.0.0.1:47821/api</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="automation-dialog">
+    <form id="automation-form">
+      <div class="dialog-head">
+        <div>
+          <p class="eyebrow" data-i18n="dialog.eyebrow">AUTOMATION DEFINITION</p>
+          <h2>New automation</h2>
+        </div>
+        <button type="button" class="close" data-dialog-cancel aria-label="Close">×</button>
+      </div>
+      <label><span data-i18n="field.name">Name</span><input name="name" required placeholder="Process incoming CSV"></label>
+      <label><span data-i18n="field.description">Description</span><textarea name="description" placeholder="What should happen?"></textarea></label>
+      <label><span data-i18n="field.trigger">Trigger</span>
+        <select name="trigger">
+          <option value="manual" data-i18n="trigger.manual">Manual</option>
+          <option value="folder_created" data-i18n="trigger.folder_created">Folder created</option>
+          <option value="file_created" data-i18n="trigger.file_created">File created</option>
+          <option value="file_modified" data-i18n="trigger.file_modified">File modified</option>
+          <option value="interval" data-i18n="trigger.interval">Interval</option>
+          <option value="scheduled" data-i18n="trigger.scheduled">Scheduled (cron)</option>
+        </select>
+      </label>
+      <label><span data-i18n="field.watchPath">Watch path</span><input name="watchPath" value="./" placeholder="/path/to/watch"></label>
+      <label><span data-i18n="field.interval">Interval seconds</span><input name="intervalSeconds" type="number" min="1" value="3600"></label>
+      <label class="check-field"><input name="startImmediately" type="checkbox"><span data-i18n="field.startImmediately">Start interval immediately</span></label>
+      <label><span data-i18n="field.schedule">Schedule (cron "0 9 * * *" or HH:MM)</span><input name="schedule" placeholder="0 9 * * *" value="0 9 * * *"></label>
+      <label><span data-i18n="field.timezone">Timezone (e.g. Asia/Tokyo, empty=local)</span><input name="timezone" placeholder="Asia/Tokyo"></label>
+      <label><span data-i18n="field.overlap">Overlap policy</span>
+        <select name="overlap">
+          <option value="skip" selected data-i18n="overlap.skip">Skip (default)</option>
+          <option value="queue" data-i18n="overlap.queue">Queue</option>
+        </select>
+      </label>
+      <label><span data-i18n="field.executable">Command executable</span><input name="executable" value="python3" required></label>
+      <label><span data-i18n="field.args">Arguments</span><input name="args" placeholder="script.py {file_path}"></label>
+      <fieldset>
+        <legend data-i18n="field.policy">Execution policy</legend>
+        <div class="field-grid">
+          <label><span data-i18n="field.timeout">Timeout (seconds)</span><input name="timeoutSeconds" type="number" min="1" max="86400" value="300" required></label>
+          <label class="check-field"><input name="retryEnabled" type="checkbox"><span data-i18n="field.retry">Enable retry</span></label>
+          <label><span data-i18n="field.maxAttempts">Max attempts</span><input name="maxAttempts" type="number" min="1" max="10" value="3" required></label>
+          <label><span data-i18n="field.delay">Retry delay (seconds)</span><input name="delaySeconds" type="number" min="0" max="300" value="10" required></label>
+          <label><span data-i18n="field.backoff">Backoff</span>
+            <select name="backoff">
+              <option value="fixed">Fixed</option>
+              <option value="exponential">Exponential</option>
+            </select>
+          </label>
+          <label class="check-field"><input name="retryOnTimeout" type="checkbox"><span data-i18n="field.retryOnTimeout">Retry on timeout</span></label>
+        </div>
+      </fieldset>
+      <div class="dialog-actions">
+        <button type="button" class="secondary" data-dialog-cancel data-i18n="btn.cancel">Cancel</button>
+        <button type="submit" class="primary" data-i18n="btn.create">Create automation</button>
+      </div>
+    </form>
+  </dialog>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
