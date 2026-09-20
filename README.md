@@ -35,6 +35,7 @@ cargo run --manifest-path src-tauri/Cargo.toml
 ```
 
 ## 本番ビルド
+
 ```bash
 cargo install tauri-cli
 cargo tauri build
