@@ -56,6 +56,10 @@ cargo tauri build
 
 `Skill/TrigA-skill/SKILL.md`に、REST API経由で自動化の作成・実行・状態確認を行う手順をまとめています。自然言語の依頼（例：「InputフォルダにCSVが入ったらPythonで処理してCompletedへ移動して」）を自動化定義に変換して`POST /api/automations`で登録できます。
 
+## License
+
+このプロジェクトは [MIT License](./LICENSE) のもとで公開されています。
+
 ## 補足
 
 システムトレイ、OS自動起動、ワーカープール／ジョブテーブルの本格化は今後の拡張予定です。インターバル・定期実行はイベント駆動（ポーリングなし）で動作します。現在の契約は`src-tauri/tests/interval_scheduled_mvp.rs`と`src-tauri/tests/file_trigger_history.rs`を参照してください。
