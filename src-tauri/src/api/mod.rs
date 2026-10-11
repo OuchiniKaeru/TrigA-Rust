@@ -3,6 +3,8 @@ use crate::{
     engine::application_service::{self, AppState},
     storage::repository,
 };
+
+pub mod workflow;
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -20,6 +22,7 @@ struct HistoryQuery {
 }
 
 pub fn router(state: Arc<AppState>) -> Router {
+    let workflow_routes = workflow::routes();
     Router::new()
         .route(
             "/api/automations",
@@ -40,6 +43,8 @@ pub fn router(state: Arc<AppState>) -> Router {
         .route("/api/history", get(list_history))
         .route("/api/history/{id}", get(get_history))
         .route("/api/schema/automation", get(schema))
+        .route("/api/version", get(version))
+        .merge(workflow_routes)
         .layer(
             CorsLayer::new()
                 .allow_origin(Any)
@@ -225,12 +230,21 @@ async fn schema() -> impl IntoResponse {
         }),
     )
 }
+/// Application version (single source of truth: Cargo package version).
+/// Shown in the Settings view so users can report it with bug reports.
+async fn version() -> impl IntoResponse {
+    Json(serde_json::json!({
+        "name": "TrigA",
+        "version": env!("CARGO_PKG_VERSION"),
+    }))
+}
 fn error_response(error: crate::AppError) -> axum::response::Response {
     let status = match &error {
         crate::AppError::NotFound(_) => StatusCode::NOT_FOUND,
         crate::AppError::Validation(_) | crate::AppError::Security(_) => {
             StatusCode::BAD_REQUEST
         }
+        crate::AppError::Conflict(_) => StatusCode::CONFLICT,
         _ => StatusCode::BAD_REQUEST,
     };
     (status, Json(serde_json::json!({"error": error.to_string()}))).into_response()
@@ -275,6 +289,27 @@ mod tests {
 
         assert_eq!(response.status(), StatusCode::CREATED);
         assert_eq!(response.headers()["access-control-allow-origin"], "*");
+    }
+
+    #[tokio::test]
+    async fn version_reports_cargo_package_version() {
+        let state = test_state().await;
+        let request = Request::builder()
+            .method("GET")
+            .uri("/api/version")
+            .body(Body::empty())
+            .unwrap();
+        let response = router(state).oneshot(request).await.unwrap();
+        assert_eq!(response.status(), StatusCode::OK);
+        let body = axum::body::to_bytes(response.into_body(), 64 * 1024)
+            .await
+            .unwrap();
+        let payload: serde_json::Value = serde_json::from_slice(&body).unwrap();
+        assert_eq!(payload["name"], serde_json::json!("TrigA"));
+        assert_eq!(
+            payload["version"].as_str().unwrap(),
+            env!("CARGO_PKG_VERSION")
+        );
     }
 
     #[tokio::test]

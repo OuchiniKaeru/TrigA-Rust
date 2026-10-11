@@ -1,6 +1,7 @@
 import { bindDialogControls } from './modal.js';
 import { buildAutomationDefinition } from './automation-form.js';
 import { THEMES, loadTheme, applyTheme } from './theme.js';
+import { initWorkflows } from './workflows.js';
 import {
   LANGUAGES,
   loadLanguage,
@@ -41,6 +42,8 @@ const status = (value) => `<span class="status ${value}">${value}</span>`;
 
 function pageTitle(view) {
   if (view === 'settings') return t('settings.title');
+  if (view === 'workflows') return t('wf.title');
+  if (view === 'workflow-editor') return t('wf.editor');
   const key = `nav.${view}`;
   const text = t(key);
   if (text === key) return view[0].toUpperCase() + view.slice(1);
@@ -54,12 +57,18 @@ function show(view) {
 }
 
 async function request(path, options) {
-  const response = await fetch(API + path, { headers: { 'Content-Type': 'application/json' }, ...options });
+  const raw = options?.raw;
+  const fetchOptions = { headers: { 'Content-Type': 'application/json' }, ...options };
+  delete fetchOptions.raw;
+  const response = await fetch(API + path, fetchOptions);
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));
     throw new Error(body.error || 'Request failed');
   }
   if (response.status === 204) return null;
+  if (raw) return response.text();
+  const contentType = response.headers.get('content-type') || '';
+  if (contentType.includes('yaml') || contentType.includes('text/')) return response.text();
   return response.json();
 }
 
@@ -155,6 +164,8 @@ applyStaticStrings(lang);
 renderSettings();
 $('#theme-select').onchange = (event) => applyTheme(event.target.value);
 $('#lang-select').onchange = (event) => setLanguage(event.target.value);
+$('#yaml-close')?.addEventListener('click', () => $('#yaml-dialog').close());
+$('#run-close')?.addEventListener('click', () => $('#run-dialog').close());
 
 $('#new-automation').onclick = () => openEditor();
 document.querySelectorAll('.nav,.text-button').forEach((button) => button.onclick = () => show(button.dataset.view));
@@ -211,8 +222,29 @@ document.addEventListener('click', async (event) => {
   }
 });
 
+async function loadVersion() {
+  try {
+    const info = await request('/version');
+    const el = $('#app-version');
+    if (el) el.textContent = `${info.name || 'TrigA'} ${info.version || ''}`.trim();
+  } catch {
+    const el = $('#app-version');
+    if (el) el.textContent = 'unavailable';
+  }
+}
+
 refresh();
+loadVersion();
 // Background triggers (file/schedule/interval) record history without user
 // interaction, so refresh while the tab is visible. 5s is a low-frequency
 // UI poll only; the engine itself stays event-driven (spec #17/#95).
 setInterval(() => { if (document.visibilityState === 'visible') refresh(); }, 5000);
+
+// Workflow UI (spec section 9). Shares the same REST base + i18n.
+const workflows = initWorkflows({ request, t, getLang: () => lang });
+workflows.bindEditor();
+workflows.bindYamlDialog();
+workflows.refreshList();
+document.querySelectorAll('[data-view="workflows"]').forEach((button) => {
+  button.addEventListener('click', () => workflows.refreshList());
+});

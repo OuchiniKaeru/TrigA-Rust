@@ -12,12 +12,15 @@ src-tauri/*.log
 *.deb
 *.rpm
 
-# Runtime data (created at startup: data/automation.db)
+# Runtime data (SQLite lives in the OS user-data dir; TRIGA_DATA_DIR overrides it.
+# Never keep a live database under a source tree: `cargo tauri dev` watches
+# src-tauri/ and kills the app on every save when the DB is written there.)
 data/*.db
 data/*.db-journal
 data/*.db-wal
 data/*.db-shm
 data/*.sqlite*
+src-tauri/data/
 **/*.db-journal
 **/*.db-wal
 **/*.db-shm

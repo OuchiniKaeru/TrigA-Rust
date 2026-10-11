@@ -6,6 +6,7 @@ pub mod engine;
 pub mod services;
 pub mod storage;
 pub mod triggers;
+pub mod workflow;
 
 use std::sync::Arc;
 use thiserror::Error;
@@ -28,13 +29,20 @@ pub enum AppError {
     NotFound(String),
     #[error("trigger error: {0}")]
     Trigger(String),
+    #[error("conflict: {0}")]
+    Conflict(String),
+    #[error("cancelled: {0}")]
+    Cancelled(String),
+    #[error("workflow error: {0}")]
+    Workflow(String),
 }
 
 pub fn run() {
     let runtime = tokio::runtime::Runtime::new().expect("failed to create Tokio runtime");
     let state = runtime.block_on(async {
-        std::fs::create_dir_all("data").expect("failed to create data directory");
-        let pool = storage::database::connect("sqlite://data/automation.db?mode=rwc")
+        let data_home = storage::database::ensure_data_home()
+            .expect("failed to prepare data directory");
+        let pool = storage::database::connect(&storage::database::db_url(&data_home))
             .await
             .expect("failed to connect to SQLite");
         storage::database::migrate(&pool)
@@ -73,6 +81,29 @@ pub fn run() {
             commands::list_history,
             commands::list_jobs,
             commands::get_job,
+            commands::workflow::list_workflows,
+            commands::workflow::get_workflow,
+            commands::workflow::create_workflow,
+            commands::workflow::update_workflow,
+            commands::workflow::delete_workflow,
+            commands::workflow::duplicate_workflow,
+            commands::workflow::validate_workflow,
+            commands::workflow::import_workflow_yaml,
+            commands::workflow::export_workflow_yaml,
+            commands::workflow::list_node_types,
+            commands::workflow::run_workflow,
+            commands::workflow::cancel_workflow_run,
+            commands::workflow::get_workflow_run,
+            commands::workflow::list_workflow_runs,
+            commands::workflow::get_workflow_node_runs,
+            commands::workflow::get_workflow_versions,
+            commands::workflow::restore_workflow_version,
+            commands::workflow::enable_workflow,
+            commands::workflow::disable_workflow,
+            commands::workflow::list_workflow_triggers,
+            commands::workflow::attach_workflow_trigger,
+            commands::workflow::detach_workflow_trigger,
+            commands::workflow::parse_workflow_yaml,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Automation Manager");

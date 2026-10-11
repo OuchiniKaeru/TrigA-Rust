@@ -28,7 +28,7 @@ pub struct SchedulerRegistry {
 }
 
 impl SchedulerRegistry {
-    async fn mark_running(&self, automation_id: &str) -> bool {
+    pub async fn mark_running(&self, automation_id: &str) -> bool {
         let mut guard = self.running.lock().await;
         if guard.contains(automation_id) {
             return false;
@@ -37,11 +37,11 @@ impl SchedulerRegistry {
         true
     }
 
-    async fn mark_finished(&self, automation_id: &str) {
+    pub async fn mark_finished(&self, automation_id: &str) {
         self.running.lock().await.remove(automation_id);
     }
 
-    async fn is_running(&self, automation_id: &str) -> bool {
+    pub async fn is_running(&self, automation_id: &str) -> bool {
         self.running.lock().await.contains(automation_id)
     }
 
@@ -279,7 +279,6 @@ pub async fn run_automation_with_context(
     state.scheduler.mark_finished(&automation.id).await;
 
     let (final_status, attempt, error_message) = result;
-    // Record which entry fired the job so History identifies the file/folder.
     // (The `result` column is otherwise unused in V1.)
     let trigger_target: Option<String> = match trigger_type {
         "file_created" | "file_modified" if !context.file_path.is_empty() => {
@@ -308,6 +307,23 @@ pub async fn run_automation_with_context(
         },
     )
     .await?;
+    // Workflow trigger fan-out (spec 8): linked workflows share the same
+    // trigger event. No link => no extra run (no unintended duplication).
+    // Linked runs are background jobs; failures here never fail the legacy job.
+    {
+        let linked_state = Arc::new(AppState {
+            pool: state.pool.clone(),
+            security: state.security.clone(),
+            scheduler: Arc::clone(&state.scheduler),
+        });
+        let _ = crate::services::workflow_service::run_linked_workflows_for_automation(
+            &linked_state,
+            automation,
+            trigger_type,
+            &context,
+        )
+        .await;
+    }
     Ok(job_id)
 }
 

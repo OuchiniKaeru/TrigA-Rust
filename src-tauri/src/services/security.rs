@@ -27,6 +27,29 @@ impl SecurityPolicy {
         Ok(normalized)
     }
 
+    /// Validate an outbound HTTP(S) URL for http.request / trigger.url_changed.
+    /// Only http/https are allowed (no file://, no credentials juggling).
+    /// Private-loopback use is allowed (TrigA itself is loopback-first).
+    pub fn validate_url(&self, url: &str) -> Result<String, AppError> {
+        let trimmed = url.trim();
+        if trimmed.is_empty() {
+            return Err(AppError::Security("url must not be empty".into()));
+        }
+        if trimmed.len() > 8192 {
+            return Err(AppError::Security("url is too long".into()));
+        }
+        let lower = trimmed.to_lowercase();
+        if !(lower.starts_with("http://") || lower.starts_with("https://")) {
+            return Err(AppError::Security(format!(
+                "only http:// and https:// urls are allowed (got '{trimmed}')"
+            )));
+        }
+        if trimmed.contains([' ', '\n', '\r', '\t']) {
+            return Err(AppError::Security("url contains whitespace".into()));
+        }
+        Ok(trimmed.to_string())
+    }
+
     pub fn validate_executable(&self, executable: &str) -> Result<(), AppError> {
         if executable.trim().is_empty() {
             return Err(AppError::Security("executable must not be empty".into()));

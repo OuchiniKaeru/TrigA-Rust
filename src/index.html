@@ -6,6 +6,7 @@
   <title>TrigA</title>
   <link rel="stylesheet" href="css/app.css">
   <link rel="stylesheet" href="css/execution.css">
+  <link rel="stylesheet" href="css/workflows.css">
 </head>
 <body>
   <aside>
@@ -19,6 +20,7 @@
     <nav>
       <button class="nav active" data-view="dashboard" data-i18n="nav.dashboard">Dashboard</button>
       <button class="nav" data-view="automations" data-i18n="nav.automations">Automations</button>
+      <button class="nav" data-view="workflows" data-i18n="nav.workflows">Workflows</button>
       <button class="nav" data-view="history" data-i18n="nav.history">History</button>
       <button class="nav" data-view="settings" data-i18n="nav.settings">Settings</button>
     </nav>
@@ -59,6 +61,52 @@
       </div>
     </section>
 
+    <section id="workflows" class="view">
+      <div class="panel">
+        <div class="panel-head">
+          <h2 data-i18n="wf.title">Workflows</h2>
+          <span id="workflow-count" class="muted">0 total</span>
+        </div>
+        <div class="wf-list-toolbar">
+          <input id="wf-search" placeholder="Search workflows">
+          <select id="wf-enabled-filter">
+            <option value="all">All</option>
+            <option value="enabled">Enabled</option>
+            <option value="disabled">Disabled</option>
+          </select>
+          <button id="wf-new-btn" class="primary">＋ New workflow</button>
+        </div>
+        <div id="workflow-list" class="automation-list"></div>
+      </div>
+    </section>
+
+    <section id="workflow-editor" class="view">
+      <div class="panel">
+        <div class="panel-head">
+          <h2 id="wf-editor-title">Workflow editor</h2>
+          <div class="wf-toolbar">
+            <button id="wf-back-btn">← Back</button>
+            <button id="wf-save-btn" class="primary">Save</button>
+            <button id="wf-undo-btn">Undo</button>
+            <button id="wf-redo-btn">Redo</button>
+            <button id="wf-validate-btn">Validate</button>
+            <button id="wf-run-btn" class="primary">Run</button>
+            <button id="wf-cancel-run-btn">Cancel run</button>
+            <button id="wf-yaml-btn">YAML</button>
+          </div>
+        </div>
+        <div class="wf-editor-grid">
+          <div id="wf-palette" class="wf-palette"></div>
+          <div id="wf-canvas-wrap"><div id="wf-canvas"></div></div>
+          <div id="wf-props" class="wf-props"></div>
+        </div>
+        <div class="wf-bottom">
+          <div class="wf-bottom-col"><h3>Validation</h3><div id="wf-validation"><span class="muted">Not validated yet</span></div></div>
+          <div class="wf-bottom-col"><h3>Hint</h3><p class="muted">Drag nodes to move. Select a node → Connect → click target to connect. Click an edge line to delete it. Shell nodes show ⚠ and need explicit confirmation at run time.</p></div>
+        </div>
+      </div>
+    </section>
+
     <section id="history" class="view">
       <div class="panel">
         <div class="panel-head">
@@ -89,6 +137,14 @@
           <div class="settings-row">
             <label data-i18n="settings.endpoint">Endpoint</label>
             <span class="api-endpoint">http://127.0.0.1:47821/api</span>
+          </div>
+        </div>
+        <div class="settings-card">
+          <h3 data-i18n="settings.about">About</h3>
+          <p data-i18n="settings.aboutBody">Bug reports and questions are easier to handle with the version number.</p>
+          <div class="settings-row">
+            <label data-i18n="settings.version">Version</label>
+            <span id="app-version" class="api-endpoint">…</span>
           </div>
         </div>
       </div>
@@ -149,6 +205,38 @@
         <button type="button" class="secondary" data-dialog-cancel data-i18n="btn.cancel">Cancel</button>
         <button type="submit" class="primary" data-i18n="btn.create">Create automation</button>
       </div>
+    </form>
+  </dialog>
+  <dialog id="yaml-dialog">
+    <form method="dialog">
+      <div class="dialog-head">
+        <div>
+          <p class="eyebrow">WORKFLOW YAML</p>
+          <h2>YAML editor</h2>
+        </div>
+        <button type="button" class="close" id="yaml-close" aria-label="Close">×</button>
+      </div>
+      <p class="muted">Validate → Apply. Invalid YAML is never saved. Import never executes.</p>
+      <textarea id="wf-yaml-text" rows="20" spellcheck="false"></textarea>
+      <div id="yaml-validation"></div>
+      <div class="dialog-actions">
+        <label class="secondary">Import file <input id="wf-yaml-import-file" type="file" accept=".yaml,.yml" hidden></label>
+        <button type="button" class="secondary" id="wf-yaml-export">Export</button>
+        <button type="button" class="secondary" id="wf-yaml-validate">Validate</button>
+        <button type="button" class="primary" id="wf-yaml-apply" disabled>Apply</button>
+      </div>
+    </form>
+  </dialog>
+  <dialog id="run-dialog">
+    <form method="dialog">
+      <div class="dialog-head">
+        <div>
+          <p class="eyebrow">WORKFLOW RUN</p>
+          <h2>Run detail</h2>
+        </div>
+        <button type="button" class="close" id="run-close" aria-label="Close">×</button>
+      </div>
+      <div id="run-detail"></div>
     </form>
   </dialog>
   <script type="module" src="js/app.js"></script>

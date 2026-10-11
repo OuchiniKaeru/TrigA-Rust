@@ -6,6 +6,8 @@ use crate::{
     storage::repository,
 };
 
+pub mod workflow;
+
 fn state_error(error: crate::AppError) -> String {
     error.to_string()
 }
